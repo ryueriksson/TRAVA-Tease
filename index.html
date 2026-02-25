@@ -545,6 +545,11 @@
     footer { flex-direction: column; gap: 16px; text-align: center; }
   }
 
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 6px rgba(0,212,200,0.6); }
+    50% { opacity: 0.5; box-shadow: 0 0 12px rgba(0,212,200,0.9); }
+  }
+
   /* Floating particles */
   .particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
   .particle {
@@ -574,9 +579,9 @@
   <ul class="nav-links">
     <li><a href="#how">How It Works</a></li>
     <li><a href="#features">Features</a></li>
-    <li><a href="#pricing">Early Access</a></li>
+    <li><a href="#comparison">Comparison</a></li>
   </ul>
-  <button class="nav-cta">Get Early Access</button>
+  <div style="font-family:'DM Mono',monospace;font-size:0.7rem;letter-spacing:0.15em;color:var(--teal);border:1px solid rgba(0,212,200,0.25);padding:8px 16px;border-radius:4px;">COMING SOON</div>
 </nav>
 
 <!-- HERO -->
@@ -588,8 +593,12 @@
   <p class="hero-sub">Tell TRAVA where you want to go and when you're flexible. Our AI scans every date, every airport, and finds the best deal — in seconds.</p>
 
   <div class="hero-actions">
-    <button class="btn-primary">Try TRAVA Free</button>
-    <button class="btn-secondary">Watch Demo →</button>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;">
+      <div style="display:flex;align-items:center;gap:8px;background:rgba(0,212,200,0.06);border:1px solid rgba(0,212,200,0.2);padding:12px 24px;border-radius:4px;">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--teal);display:inline-block;animation:pulse 2s infinite;"></span>
+        <span style="font-family:'DM Mono',monospace;font-size:0.8rem;letter-spacing:0.15em;color:var(--teal);text-transform:uppercase;">Something big is coming</span>
+      </div>
+    </div>
   </div>
 
   <!-- Chat Demo -->
@@ -880,15 +889,22 @@
 
 </section>
 
-<!-- CTA -->
-<section class="cta-section" id="pricing">
-  <h2 class="reveal">Ready to fly <em>smarter?</em></h2>
-  <p class="reveal">Join the waitlist for early access. Be the first to use TRAVA when we launch.</p>
-  <div class="email-form reveal">
-    <input type="email" class="email-input" placeholder="your@email.com">
-    <button class="btn-primary">Get Early Access</button>
+</section>
+
+<!-- TEASER CTA -->
+<section class="cta-section" id="teaser">
+  <p class="hero-eyebrow reveal" style="margin-bottom:20px;">✦ Stay Tuned</p>
+  <h2 class="reveal">TRAVA is <em>almost</em> ready.</h2>
+  <p class="reveal" style="margin: 24px auto 0; max-width: 460px; color: var(--muted); font-size: 1.05rem; line-height: 1.7;">
+    We're putting the final touches on something that will change the way you book flights. Follow along for the launch.
+  </p>
+  <div class="reveal" style="margin-top:40px;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:10px;padding:16px 28px;border-radius:4px;border:1px solid var(--border);background:rgba(0,212,200,0.04);">
+      <span style="width:8px;height:8px;border-radius:50%;background:var(--teal);display:inline-block;box-shadow:0 0 8px rgba(0,212,200,0.6);animation:pulse 2s infinite;"></span>
+      <span style="font-family:'DM Mono',monospace;font-size:0.8rem;letter-spacing:0.12em;color:var(--teal);text-transform:uppercase;">Launch Coming Soon</span>
+    </div>
   </div>
-  <p style="margin-top:20px; font-size:0.8rem; color:var(--muted);">Powered by Amadeus Flight API · No spam, ever.</p>
+  <p style="margin-top:28px; font-size:0.8rem; color:var(--muted);">Powered by Amadeus Flight API · Built with ✦</p>
 </section>
 
 <!-- FOOTER -->
