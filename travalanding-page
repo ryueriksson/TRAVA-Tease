@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRAVA — Your AI Flight Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060a10;
+    --bg2: #0c1219;
+    --bg3: #111a24;
+    --teal: #00d4c8;
+    --teal-dim: #00a89e;
+    --teal-glow: rgba(0,212,200,0.15);
+    --gold: #f0c060;
+    --text: #e8eef4;
+    --muted: #6a7f94;
+    --border: rgba(0,212,200,0.12);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: 0.4;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 24px 60px;
+    background: linear-gradient(to bottom, rgba(6,10,16,0.95), transparent);
+    backdrop-filter: blur(8px);
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem; font-weight: 700;
+    color: var(--text); text-decoration: none;
+  }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--teal);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+
+  .nav-links { display: flex; gap: 36px; list-style: none; }
+  .nav-links a {
+    color: var(--muted); text-decoration: none;
+    font-size: 0.9rem; font-weight: 500; letter-spacing: 0.05em;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--teal); }
+
+  .nav-cta {
+    background: transparent; border: 1px solid var(--teal);
+    color: var(--teal); padding: 10px 24px; border-radius: 4px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500;
+    cursor: pointer; transition: all 0.2s; letter-spacing: 0.05em;
+  }
+  .nav-cta:hover { background: var(--teal); color: var(--bg); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    padding: 120px 40px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Radial aurora */
+  .hero::after {
+    content: '';
+    position: absolute;
+    width: 900px; height: 900px;
+    background: radial-gradient(ellipse, rgba(0,212,200,0.07) 0%, transparent 65%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  /* Grid lines */
+  .grid-bg {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,200,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,200,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black, transparent);
+  }
+
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem; letter-spacing: 0.2em;
+    color: var(--teal); text-transform: uppercase;
+    margin-bottom: 24px;
+    opacity: 0; animation: fadeUp 0.8s 0.2s forwards;
+  }
+
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(3.5rem, 8vw, 7rem);
+    line-height: 1.05;
+    font-weight: 700;
+    max-width: 900px;
+    opacity: 0; animation: fadeUp 0.8s 0.4s forwards;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    color: var(--teal);
+    display: inline-block;
+  }
+
+  .hero-sub {
+    margin-top: 28px;
+    font-size: 1.15rem; font-weight: 300;
+    color: var(--muted); max-width: 520px;
+    line-height: 1.7;
+    opacity: 0; animation: fadeUp 0.8s 0.6s forwards;
+  }
+
+  .hero-actions {
+    margin-top: 48px;
+    display: flex; gap: 16px; align-items: center;
+    opacity: 0; animation: fadeUp 0.8s 0.8s forwards;
+  }
+
+  .btn-primary {
+    background: var(--teal); color: var(--bg);
+    border: none; padding: 16px 36px; border-radius: 4px;
+    font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 600;
+    cursor: pointer; letter-spacing: 0.03em;
+    transition: all 0.2s;
+    box-shadow: 0 0 30px rgba(0,212,200,0.25);
+  }
+  .btn-primary:hover {
+    background: #00ebe0;
+    box-shadow: 0 0 50px rgba(0,212,200,0.4);
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    background: transparent; color: var(--text);
+    border: 1px solid rgba(255,255,255,0.15); padding: 16px 36px; border-radius: 4px;
+    font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 400;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--teal); color: var(--teal); }
+
+  /* ── CHAT DEMO ── */
+  .chat-demo {
+    margin-top: 80px;
+    width: min(700px, 90vw);
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,212,200,0.05);
+    opacity: 0; animation: fadeUp 0.8s 1s forwards;
+    position: relative; z-index: 1;
+  }
+
+  .chat-header {
+    padding: 16px 20px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--muted);
+  }
+
+  .chat-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-red { background: #ff5f57; }
+  .dot-yellow { background: #ffbd2e; }
+  .dot-green { background: #28c840; }
+
+  .chat-body { padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+
+  .msg {
+    display: flex; gap: 12px; align-items: flex-start;
+    opacity: 0; animation: fadeUp 0.5s forwards;
+  }
+  .msg:nth-child(1) { animation-delay: 1.4s; }
+  .msg:nth-child(2) { animation-delay: 1.9s; }
+  .msg:nth-child(3) { animation-delay: 2.4s; }
+
+  .msg-avatar {
+    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
+  }
+  .avatar-user { background: rgba(255,255,255,0.1); color: var(--text); }
+  .avatar-ai { background: var(--teal); color: var(--bg); }
+
+  .msg-bubble {
+    padding: 12px 16px; border-radius: 12px;
+    font-size: 0.9rem; line-height: 1.6;
+    max-width: 520px;
+  }
+  .bubble-user { background: rgba(255,255,255,0.05); color: var(--text); border-radius: 12px 12px 2px 12px; }
+  .bubble-ai { background: rgba(0,212,200,0.08); color: var(--text); border: 1px solid rgba(0,212,200,0.15); border-radius: 12px 12px 12px 2px; }
+
+  .result-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(0,212,200,0.12); border: 1px solid rgba(0,212,200,0.25);
+    padding: 4px 12px; border-radius: 20px;
+    font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--teal);
+    margin-top: 8px;
+  }
+
+  /* ── STATS ── */
+  .stats {
+    display: flex; justify-content: center; gap: 60px;
+    padding: 60px 40px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    position: relative; z-index: 1;
+  }
+
+  .stat { text-align: center; }
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.8rem; font-weight: 700;
+    color: var(--teal);
+  }
+  .stat-label {
+    font-size: 0.85rem; color: var(--muted);
+    margin-top: 4px; letter-spacing: 0.05em;
+  }
+
+  /* ── HOW IT WORKS ── */
+  section { padding: 100px 60px; position: relative; z-index: 1; }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem; letter-spacing: 0.2em;
+    color: var(--teal); text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 700; line-height: 1.15;
+    max-width: 560px;
+  }
+
+  .section-title em { font-style: italic; color: var(--teal); }
+
+  /* Steps */
+  .steps {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 2px; margin-top: 60px;
+  }
+
+  .step {
+    background: var(--bg2);
+    padding: 40px 36px;
+    border: 1px solid var(--border);
+    position: relative; overflow: hidden;
+    transition: border-color 0.3s;
+  }
+  .step:hover { border-color: var(--teal); }
+  .step:first-child { border-radius: 12px 0 0 12px; }
+  .step:last-child { border-radius: 0 12px 12px 0; }
+
+  .step::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--teal), transparent);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .step:hover::before { opacity: 1; }
+
+  .step-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem; color: var(--teal);
+    letter-spacing: 0.15em; margin-bottom: 24px;
+  }
+
+  .step-icon {
+    font-size: 2rem; margin-bottom: 20px;
+    display: block;
+  }
+
+  .step h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem; font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .step p { font-size: 0.9rem; color: var(--muted); line-height: 1.7; }
+
+  /* ── FEATURES ── */
+  .features-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 24px; margin-top: 60px;
+  }
+
+  .feature-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 36px;
+    transition: all 0.3s; cursor: default;
+    position: relative; overflow: hidden;
+  }
+
+  .feature-card::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(0,212,200,0.05), transparent 60%);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .feature-card:hover::after { opacity: 1; }
+  .feature-card:hover { border-color: rgba(0,212,200,0.3); transform: translateY(-2px); }
+
+  .feature-icon {
+    width: 48px; height: 48px; border-radius: 10px;
+    background: rgba(0,212,200,0.1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; margin-bottom: 20px;
+  }
+
+  .feature-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem; margin-bottom: 10px;
+  }
+
+  .feature-card p { font-size: 0.88rem; color: var(--muted); line-height: 1.7; }
+
+  /* ── PRICE VISUAL ── */
+  .price-visual {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 32px;
+    margin-top: 60px;
+  }
+
+  .price-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 28px;
+  }
+
+  .price-route {
+    font-family: 'DM Mono', monospace; font-size: 0.85rem; color: var(--teal);
+  }
+
+  .price-best {
+    font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--text);
+  }
+
+  .price-best span { font-size: 0.9rem; color: var(--muted); font-family: 'DM Sans', sans-serif; }
+
+  .bars { display: flex; flex-direction: column; gap: 10px; }
+
+  .bar-row { display: flex; align-items: center; gap: 16px; }
+  .bar-date { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--muted); width: 56px; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 28px; background: rgba(255,255,255,0.03); border-radius: 4px; overflow: hidden; position: relative; }
+  .bar-fill {
+    height: 100%; border-radius: 4px;
+    background: linear-gradient(90deg, var(--teal-dim), var(--teal));
+    position: relative;
+    animation: growBar 1s 2s both;
+    transform-origin: left;
+  }
+  .bar-row.best .bar-fill { background: var(--teal); box-shadow: 0 0 12px rgba(0,212,200,0.4); }
+  .bar-price { font-family: 'DM Mono', monospace; font-size: 0.8rem; color: var(--teal); width: 56px; text-align: right; }
+  .bar-row.best .bar-date { color: var(--text); }
+
+  @keyframes growBar {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+
+  /* ── CTA ── */
+  .cta-section {
+    text-align: center; padding: 120px 40px;
+    background: linear-gradient(to bottom, transparent, rgba(0,212,200,0.03), transparent);
+    border-top: 1px solid var(--border);
+  }
+
+  .cta-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    line-height: 1.1;
+  }
+  .cta-section h2 em { font-style: italic; color: var(--teal); }
+
+  .cta-section p {
+    margin: 24px auto 48px;
+    max-width: 460px; color: var(--muted);
+    font-size: 1.05rem; line-height: 1.7;
+  }
+
+  .email-form {
+    display: flex; gap: 12px; justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .email-input {
+    background: var(--bg2); border: 1px solid var(--border);
+    padding: 16px 20px; border-radius: 4px; width: 300px;
+    color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+    outline: none; transition: border-color 0.2s;
+  }
+  .email-input::placeholder { color: var(--muted); }
+  .email-input:focus { border-color: var(--teal); }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 40px 60px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    position: relative; z-index: 1;
+  }
+
+  .footer-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem; color: var(--muted);
+  }
+
+  .footer-note {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem; color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── SCROLLED ANIMATIONS ── */
+  .reveal {
+    opacity: 0; transform: translateY(30px);
+    transition: opacity 0.7s, transform 0.7s;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── COMPARISON ── */
+  .compare-wrapper {
+    display: flex; gap: 0; margin-top: 56px;
+    align-items: stretch;
+    border-radius: 16px; overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .compare-col { flex: 1; display: flex; flex-direction: column; }
+  .compare-col.without { background: rgba(255,80,80,0.03); }
+  .compare-col.with { background: rgba(0,212,200,0.04); }
+  .compare-header { padding: 28px 32px 24px; border-bottom: 1px solid var(--border); }
+  .compare-badge {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+    padding: 4px 12px; border-radius: 20px; margin-bottom: 14px;
+  }
+  .compare-badge.bad { background: rgba(255,80,80,0.12); color: #ff6b6b; border: 1px solid rgba(255,80,80,0.2); }
+  .compare-badge.good { background: rgba(0,212,200,0.12); color: var(--teal); border: 1px solid rgba(0,212,200,0.25); }
+  .compare-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; }
+  .compare-sub { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--muted); margin-top: 6px; }
+  .compare-body { padding: 28px 32px; flex: 1; display: flex; flex-direction: column; gap: 18px; }
+  .compare-step { display: flex; gap: 14px; align-items: flex-start; }
+  .step-check {
+    width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 700; margin-top: 1px;
+  }
+  .bad-check { background: rgba(255,80,80,0.12); color: #ff6b6b; border: 1px solid rgba(255,80,80,0.2); }
+  .good-check { background: rgba(0,212,200,0.12); color: var(--teal); border: 1px solid rgba(0,212,200,0.25); }
+  .cs-title { font-size: 0.9rem; font-weight: 500; margin-bottom: 3px; }
+  .cs-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+  .bad-step .cs-title { color: rgba(232,238,244,0.7); }
+  .good-step .cs-title { color: var(--text); }
+  .compare-result { margin-top: auto; padding-top: 24px; border-top: 1px solid var(--border); }
+  .cr-label { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+  .cr-price { font-family: 'Playfair Display', serif; font-size: 2.6rem; font-weight: 700; line-height: 1; }
+  .bad-price { color: #ff6b6b; }
+  .good-price { color: var(--teal); }
+  .cr-detail { font-size: 0.8rem; color: var(--muted); margin-top: 6px; }
+  .cr-time { font-family: 'DM Mono', monospace; font-size: 0.72rem; margin-top: 8px; }
+  .bad-result .cr-time { color: #ff6b6b; }
+  .good-result .cr-time { color: var(--teal); }
+  .vs-divider {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 40px 0; gap: 12px;
+    background: var(--bg3);
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    width: 60px; flex-shrink: 0;
+  }
+  .vs-line { flex: 1; width: 1px; background: var(--border); }
+  .vs-badge {
+    font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.15em;
+    color: var(--muted); writing-mode: vertical-rl;
+    background: var(--bg2); padding: 10px 6px; border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  .savings-callout {
+    margin-top: 32px;
+    background: linear-gradient(135deg, rgba(0,212,200,0.08), rgba(0,212,200,0.03));
+    border: 1px solid rgba(0,212,200,0.2);
+    border-radius: 12px; padding: 28px 36px;
+    display: flex; justify-content: center;
+  }
+  .savings-inner { display: flex; align-items: center; gap: 20px; }
+  .savings-num { font-family: 'Playfair Display', serif; font-size: 2.8rem; font-weight: 700; color: var(--teal); white-space: nowrap; }
+  .savings-text { font-size: 1.05rem; color: var(--muted); max-width: 320px; line-height: 1.5; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    nav { padding: 20px 24px; }
+    .nav-links { display: none; }
+    section { padding: 60px 24px; }
+    .steps { grid-template-columns: 1fr; }
+    .step:first-child, .step:last-child { border-radius: 12px; }
+    .features-grid { grid-template-columns: 1fr; }
+    .stats { gap: 32px; flex-wrap: wrap; }
+    .compare-wrapper { flex-direction: column; }
+    .vs-divider { flex-direction: row; width: 100%; height: 50px; padding: 0 24px; }
+    .vs-line { flex: 1; height: 1px; width: auto; }
+    .vs-badge { writing-mode: horizontal-tb; }
+    .savings-inner { flex-direction: column; text-align: center; gap: 8px; }
+    footer { flex-direction: column; gap: 16px; text-align: center; }
+  }
+
+  /* Floating particles */
+  .particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  .particle {
+    position: absolute; width: 2px; height: 2px; border-radius: 50%;
+    background: var(--teal); opacity: 0;
+    animation: float linear infinite;
+  }
+  @keyframes float {
+    0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+    10% { opacity: 0.4; }
+    90% { opacity: 0.2; }
+    100% { transform: translateY(-100px) translateX(40px); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Particles -->
+<div class="particles" id="particles"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">
+    <div class="logo-icon">✈</div>
+    TRAVA
+  </a>
+  <ul class="nav-links">
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#pricing">Early Access</a></li>
+  </ul>
+  <button class="nav-cta">Get Early Access</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="grid-bg"></div>
+
+  <p class="hero-eyebrow">✦ AI-Powered Flight Intelligence</p>
+  <h1>Stop browsing.<br>Just <em>ask</em> and fly.</h1>
+  <p class="hero-sub">Tell TRAVA where you want to go and when you're flexible. Our AI scans every date, every airport, and finds the best deal — in seconds.</p>
+
+  <div class="hero-actions">
+    <button class="btn-primary">Try TRAVA Free</button>
+    <button class="btn-secondary">Watch Demo →</button>
+  </div>
+
+  <!-- Chat Demo -->
+  <div class="chat-demo">
+    <div class="chat-header">
+      <div class="chat-dot dot-red"></div>
+      <div class="chat-dot dot-yellow"></div>
+      <div class="chat-dot dot-green"></div>
+      <span style="margin-left:8px;">trava.ai — Flight Search</span>
+    </div>
+    <div class="chat-body">
+      <div class="msg">
+        <div class="msg-avatar avatar-user">Y</div>
+        <div class="msg-bubble bubble-user">
+          Find me the cheapest round trip from New York to Paris, I'm flexible between June 6th and June 14th for departure. Trip is about 10 days.
+        </div>
+      </div>
+      <div class="msg">
+        <div class="msg-avatar avatar-ai">T</div>
+        <div class="msg-bubble bubble-ai">
+          Searching 48 date combinations across JFK, EWR & Newark... ✦<br><br>
+          Best deal found: <strong style="color:var(--teal)">$487.20</strong> on <strong>June 9</strong>, flying JFK → CDG on Air France. Midweek departure saves you <strong style="color:var(--gold)">$214</strong> vs the weekend price.
+          <div><span class="result-pill">✓ 48 dates scanned</span> <span class="result-pill">✓ 3 airports checked</span></div>
+        </div>
+      </div>
+      <div class="msg">
+        <div class="msg-avatar avatar-user">Y</div>
+        <div class="msg-bubble bubble-user">
+          Nice! Are there any non-stop options or is a layover unavoidable?
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat reveal">
+    <div class="stat-num">32+</div>
+    <div class="stat-label">Date combos scanned per search</div>
+  </div>
+  <div class="stat reveal">
+    <div class="stat-num">4×</div>
+    <div class="stat-label">Nearby airports checked</div>
+  </div>
+  <div class="stat reveal">
+    <div class="stat-num">$200</div>
+    <div class="stat-label">Average savings found</div>
+  </div>
+  <div class="stat reveal">
+    <div class="stat-num">8s</div>
+    <div class="stat-label">Average search time</div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <p class="section-label reveal">— The Process</p>
+  <h2 class="section-title reveal">Three steps to your <em>perfect</em> flight</h2>
+
+  <div class="steps">
+    <div class="step reveal">
+      <div class="step-num">01 —</div>
+      <span class="step-icon">💬</span>
+      <h3>Tell TRAVA your plans</h3>
+      <p>Type naturally. "I want to fly to Tokyo sometime in April, flexible by a few days either side." No forms. No dropdowns. Just conversation.</p>
+    </div>
+    <div class="step reveal">
+      <div class="step-num">02 —</div>
+      <span class="step-icon">🔍</span>
+      <h3>AI scans everything</h3>
+      <p>TRAVA searches every date in your window, every nearby airport, and every available airline via Amadeus — in seconds, not hours.</p>
+    </div>
+    <div class="step reveal">
+      <div class="step-num">03 —</div>
+      <span class="step-icon">✈</span>
+      <h3>Book with confidence</h3>
+      <p>Get a clear recommendation with full reasoning. One click takes you straight to booking via our trusted partners. No hidden fees.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PRICE VISUAL -->
+<section style="padding-top: 0;">
+  <div class="price-visual reveal">
+    <div class="price-header">
+      <div>
+        <div class="price-route">JFK → CDG · June 6–14</div>
+        <div style="font-size:0.8rem; color:var(--muted); margin-top:4px;">48 dates found across JFK, EWR & LGA</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="price-best">$487.20 <span>best price</span></div>
+        <div style="font-size:0.75rem; color:var(--teal); font-family:'DM Mono',monospace;">Tue, June 9 · JFK · Air France</div>
+      </div>
+    </div>
+    <div class="bars">
+      <div class="bar-row best">
+        <div class="bar-date">Jun 9</div>
+        <div class="bar-track"><div class="bar-fill" style="width:48%"></div></div>
+        <div class="bar-price">$487 ★</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-date">Jun 10</div>
+        <div class="bar-track"><div class="bar-fill" style="width:52%; animation-delay:2.1s"></div></div>
+        <div class="bar-price">$512</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-date">Jun 11</div>
+        <div class="bar-track"><div class="bar-fill" style="width:56%; animation-delay:2.2s"></div></div>
+        <div class="bar-price">$538</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-date">Jun 6</div>
+        <div class="bar-track"><div class="bar-fill" style="width:68%; animation-delay:2.3s"></div></div>
+        <div class="bar-price">$604</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-date">Jun 13</div>
+        <div class="bar-track"><div class="bar-fill" style="width:78%; animation-delay:2.4s"></div></div>
+        <div class="bar-price">$658</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-date">Jun 14</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%; animation-delay:2.5s; background: linear-gradient(90deg, #1a3a4a, #2a5060)"></div></div>
+        <div class="bar-price" style="color:var(--muted)">$701</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <p class="section-label reveal">— Why TRAVA</p>
+  <h2 class="section-title reveal">Built for the way <em>people</em> actually travel</h2>
+
+  <div class="features-grid">
+    <div class="feature-card reveal">
+      <div class="feature-icon">🗓️</div>
+      <h3>Flexible Date Intelligence</h3>
+      <p>Give a range, not a date. TRAVA finds the cheapest day within your window and explains exactly why — so you understand the price, not just see it.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">🛫</div>
+      <h3>Nearby Airport Search</h3>
+      <p>Automatically checks airports within driving distance of your origin. Flying from CLT instead of AVL saved one user $106 in a single search.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">💬</div>
+      <h3>Natural Language Search</h3>
+      <p>No forms. No dropdown menus. Just describe your trip the way you'd tell a friend — TRAVA understands context, preferences, and follow-up questions.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">🔔</div>
+      <h3>Price Tracking</h3>
+      <p>Track any flight and get notified when prices drop. TRAVA monitors the market so you can book at exactly the right moment.</p>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON -->
+<section id="comparison" style="padding: 100px 60px;">
+  <p class="section-label reveal">— The Difference</p>
+  <h2 class="section-title reveal">The old way vs. the <em>TRAVA</em> way</h2>
+  <p class="reveal" style="color:var(--muted); margin-top:16px; font-size:0.95rem; max-width:500px; line-height:1.7;">Same trip. Same destination. Completely different experience.</p>
+
+  <div class="compare-wrapper reveal">
+
+    <!-- WITHOUT TRAVA -->
+    <div class="compare-col without">
+      <div class="compare-header">
+        <span class="compare-badge bad">Without TRAVA</span>
+        <div class="compare-title">Manual Flight Search</div>
+        <div class="compare-sub">JFK → CDG · June 6–14</div>
+      </div>
+      <div class="compare-body">
+        <div class="compare-step bad-step">
+          <div class="step-check bad-check">✕</div>
+          <div>
+            <div class="cs-title">Open Google Flights</div>
+            <div class="cs-desc">Pick one date. See one price. Repeat for every day.</div>
+          </div>
+        </div>
+        <div class="compare-step bad-step">
+          <div class="step-check bad-check">✕</div>
+          <div>
+            <div class="cs-title">Check Kayak separately</div>
+            <div class="cs-desc">Different results, different prices. Which one is right?</div>
+          </div>
+        </div>
+        <div class="compare-step bad-step">
+          <div class="step-check bad-check">✕</div>
+          <div>
+            <div class="cs-title">Try Skyscanner too</div>
+            <div class="cs-desc">Now you have 3 tabs open and you're more confused.</div>
+          </div>
+        </div>
+        <div class="compare-step bad-step">
+          <div class="step-check bad-check">✕</div>
+          <div>
+            <div class="cs-title">Manually check nearby airports</div>
+            <div class="cs-desc">EWR? LGA? You'd have to start the whole process over.</div>
+          </div>
+        </div>
+        <div class="compare-step bad-step">
+          <div class="step-check bad-check">✕</div>
+          <div>
+            <div class="cs-title">Give up after 45 minutes</div>
+            <div class="cs-desc">Book whatever looks okay. Hope it was the right call.</div>
+          </div>
+        </div>
+        <div class="compare-result bad-result">
+          <div class="cr-label">You ended up paying</div>
+          <div class="cr-price bad-price">$658</div>
+          <div class="cr-detail">Saturday Jun 13 · JFK · Delta · 1 stop</div>
+          <div class="cr-time">⏱ 47 minutes of searching</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VS DIVIDER -->
+    <div class="vs-divider">
+      <div class="vs-line"></div>
+      <div class="vs-badge">VS</div>
+      <div class="vs-line"></div>
+    </div>
+
+    <!-- WITH TRAVA -->
+    <div class="compare-col with">
+      <div class="compare-header">
+        <span class="compare-badge good">With TRAVA</span>
+        <div class="compare-title">AI Flight Intelligence</div>
+        <div class="compare-sub">JFK → CDG · June 6–14</div>
+      </div>
+      <div class="compare-body">
+        <div class="compare-step good-step">
+          <div class="step-check good-check">✓</div>
+          <div>
+            <div class="cs-title">Type your trip naturally</div>
+            <div class="cs-desc">"NYC to Paris, flexible June 6–14, find cheapest." Done.</div>
+          </div>
+        </div>
+        <div class="compare-step good-step">
+          <div class="step-check good-check">✓</div>
+          <div>
+            <div class="cs-title">48 date combos scanned instantly</div>
+            <div class="cs-desc">Every day in your window checked simultaneously via Amadeus.</div>
+          </div>
+        </div>
+        <div class="compare-step good-step">
+          <div class="step-check good-check">✓</div>
+          <div>
+            <div class="cs-title">3 airports auto-compared</div>
+            <div class="cs-desc">JFK, EWR & LGA all checked without you asking.</div>
+          </div>
+        </div>
+        <div class="compare-step good-step">
+          <div class="step-check good-check">✓</div>
+          <div>
+            <div class="cs-title">Best deal explained clearly</div>
+            <div class="cs-desc">Tuesday is cheaper because weekend demand peaks Friday–Sunday.</div>
+          </div>
+        </div>
+        <div class="compare-step good-step">
+          <div class="step-check good-check">✓</div>
+          <div>
+            <div class="cs-title">One-click to booking</div>
+            <div class="cs-desc">Straight to checkout. No second-guessing, no tab-switching.</div>
+          </div>
+        </div>
+        <div class="compare-result good-result">
+          <div class="cr-label">You paid</div>
+          <div class="cr-price good-price">$487</div>
+          <div class="cr-detail">Tuesday Jun 9 · JFK · Air France · Non-stop</div>
+          <div class="cr-time">⚡ 8 seconds of searching</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Savings callout -->
+  <div class="savings-callout reveal">
+    <div class="savings-inner">
+      <div class="savings-num">$171 saved</div>
+      <div class="savings-text">on a single search — and 47 minutes of your life back.</div>
+    </div>
+  </div>
+
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="pricing">
+  <h2 class="reveal">Ready to fly <em>smarter?</em></h2>
+  <p class="reveal">Join the waitlist for early access. Be the first to use TRAVA when we launch.</p>
+  <div class="email-form reveal">
+    <input type="email" class="email-input" placeholder="your@email.com">
+    <button class="btn-primary">Get Early Access</button>
+  </div>
+  <p style="margin-top:20px; font-size:0.8rem; color:var(--muted);">Powered by Amadeus Flight API · No spam, ever.</p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">TRAVA</div>
+  <div class="footer-note">© 2026 TRAVA · AI Flight Intelligence · Powered by Amadeus</div>
+</footer>
+
+<script>
+  // Particles
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.cssText = `
+      left: ${Math.random() * 100}%;
+      animation-duration: ${8 + Math.random() * 12}s;
+      animation-delay: ${Math.random() * 10}s;
+      opacity: 0;
+      width: ${1 + Math.random() * 2}px;
+      height: ${1 + Math.random() * 2}px;
+    `;
+    container.appendChild(p);
+  }
+
+  // Scroll reveals
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Feature card mouse glow
+  document.querySelectorAll('.feature-card').forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
+      const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(1);
+      card.style.setProperty('--mx', x + '%');
+      card.style.setProperty('--my', y + '%');
+    });
+  });
+</script>
+</body>
+</html>
