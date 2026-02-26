@@ -427,6 +427,27 @@
   .email-input::placeholder { color: var(--muted); }
   .email-input:focus { border-color: var(--teal); }
 
+  .waitlist-form {
+    display: flex; gap: 12px; justify-content: center;
+    flex-wrap: wrap; margin-top: 32px;
+  }
+  .waitlist-form .email-input { width: 280px; }
+  .btn-waitlist {
+    background: var(--teal); color: var(--bg);
+    border: none; padding: 16px 28px; border-radius: 4px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600;
+    cursor: pointer; letter-spacing: 0.03em;
+    transition: all 0.2s;
+    box-shadow: 0 0 30px rgba(0,212,200,0.25);
+  }
+  .btn-waitlist:hover { background: #00ebe0; transform: translateY(-1px); }
+  .btn-waitlist:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .waitlist-message {
+    margin-top: 16px; font-size: 0.9rem;
+  }
+  .waitlist-message.success { color: var(--teal); }
+  .waitlist-message.error { color: #ff6b6b; }
+
   /* ── FOOTER ── */
   footer {
     padding: 40px 60px;
@@ -896,14 +917,13 @@
   <p class="hero-eyebrow reveal" style="margin-bottom:20px;">✦ Stay Tuned</p>
   <h2 class="reveal">SKAI is <em>almost</em> ready.</h2>
   <p class="reveal" style="margin: 24px auto 0; max-width: 460px; color: var(--muted); font-size: 1.05rem; line-height: 1.7;">
-    We're putting the final touches on something that will change the way you book flights. Follow along for the launch.
+    We're putting the final touches on something that will change the way you book flights. Join the waitlist to be first in line.
   </p>
-  <div class="reveal" style="margin-top:40px;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;">
-    <div style="display:flex;align-items:center;gap:10px;padding:16px 28px;border-radius:4px;border:1px solid var(--border);background:rgba(0,212,200,0.04);">
-      <span style="width:8px;height:8px;border-radius:50%;background:var(--teal);display:inline-block;box-shadow:0 0 8px rgba(0,212,200,0.6);animation:pulse 2s infinite;"></span>
-      <span style="font-family:'DM Mono',monospace;font-size:0.8rem;letter-spacing:0.12em;color:var(--teal);text-transform:uppercase;">Launch Coming Soon</span>
-    </div>
-  </div>
+  <form class="waitlist-form reveal" id="waitlist-form">
+    <input type="email" class="email-input" id="waitlist-email" placeholder="Enter your email" required>
+    <button type="submit" class="btn-waitlist" id="waitlist-btn">Join Waitlist</button>
+  </form>
+  <p class="waitlist-message reveal" id="waitlist-message" style="display:none;"></p>
   <p style="margin-top:28px; font-size:0.8rem; color:var(--muted);">Powered by Amadeus Flight API · Built with ✦</p>
 </section>
 
@@ -913,7 +933,12 @@
   <div class="footer-note">© 2026 SKAI · AI Flight Intelligence · Powered by Amadeus</div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+  // Supabase config — get these from your project: Settings → API (URL + anon public key)
+  const SUPABASE_URL = 'https://mtakioqtwxdbonbnyshp.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10YWtpb3F0d3hkYm9uYnluc2hwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NTkxMjEsImV4cCI6MjA4NzQzNTEyMX0.T7I-boaiZjCWCSg6Sic-DPhYyqPc_2noMKVWm3OvD08';
+
   // Particles
   const container = document.getElementById('particles');
   for (let i = 0; i < 18; i++) {
@@ -945,6 +970,50 @@
       card.style.setProperty('--mx', x + '%');
       card.style.setProperty('--my', y + '%');
     });
+  });
+
+  // Waitlist form
+  const waitlistForm = document.getElementById('waitlist-form');
+  const waitlistEmail = document.getElementById('waitlist-email');
+  const waitlistBtn = document.getElementById('waitlist-btn');
+  const waitlistMessage = document.getElementById('waitlist-message');
+
+  function showMessage(text, isError = false) {
+    waitlistMessage.textContent = text;
+    waitlistMessage.className = 'waitlist-message reveal visible ' + (isError ? 'error' : 'success');
+    waitlistMessage.style.display = 'block';
+  }
+
+  waitlistForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = waitlistEmail.value.trim();
+    if (!email) return;
+
+    if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY') {
+      showMessage('Waitlist is not configured yet. Please add your Supabase credentials.', true);
+      return;
+    }
+
+    waitlistBtn.disabled = true;
+    waitlistBtn.textContent = 'Joining...';
+
+    try {
+      const { createClient } = supabase;
+      const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const { error } = await supabaseClient.from('waitlist').insert([{ email }]);
+      if (error) throw error;
+      showMessage('You\'re on the list! We\'ll be in touch soon.');
+      waitlistEmail.value = '';
+    } catch (err) {
+      if (err.code === '23505') {
+        showMessage('This email is already on the waitlist.', true);
+      } else {
+        showMessage('Something went wrong. Please try again.', true);
+      }
+    } finally {
+      waitlistBtn.disabled = false;
+      waitlistBtn.textContent = 'Join Waitlist';
+    }
   });
 </script>
 </body>
