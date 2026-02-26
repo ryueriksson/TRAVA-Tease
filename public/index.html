@@ -933,12 +933,7 @@
   <div class="footer-note">© 2026 SKAI · AI Flight Intelligence · Powered by Amadeus</div>
 </footer>
 
-<script src="https://unpkg.com/@supabase/supabase-js@2" crossorigin="anonymous"></script>
 <script>
-  // Supabase config — injected from Vercel env vars at build time
-  const SUPABASE_URL = '__SUPABASE_URL__';
-  const SUPABASE_ANON_KEY = '__SUPABASE_ANON_KEY__';
-
   // Particles
   const container = document.getElementById('particles');
   for (let i = 0; i < 18; i++) {
@@ -989,35 +984,26 @@
     const email = waitlistEmail.value.trim();
     if (!email) return;
 
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-      showMessage('Waitlist is not configured yet. Please add your Supabase credentials.', true);
-      return;
-    }
-    if (typeof supabase === 'undefined') {
-      showMessage('Could not load form. Try disabling ad blockers or check your connection.', true);
-      return;
-    }
-
     waitlistBtn.disabled = true;
     waitlistBtn.textContent = 'Joining...';
 
     try {
-      const { createClient } = supabase;
-      const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      const { error } = await supabaseClient.from('waitlist').insert([{ email }]);
-      if (error) throw error;
-      showMessage('You\'re on the list! We\'ll be in touch soon.');
-      waitlistEmail.value = '';
-    } catch (err) {
-      if (err.code === '23505') {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showMessage('You\'re on the list! We\'ll be in touch soon.');
+        waitlistEmail.value = '';
+      } else if (res.status === 409 || data.error === 'already_exists') {
         showMessage('This email is already on the waitlist.', true);
-      } else if (err.message?.includes('relation') && err.message?.includes('does not exist')) {
-        showMessage('Waitlist table not set up. Run supabase-setup.sql in Supabase SQL Editor.', true);
-      } else if (err.message === 'Load failed' || err.message?.includes('Failed to fetch')) {
-        showMessage('Network error. Check your connection or try disabling ad blockers.', true);
       } else {
-        showMessage('Error: ' + (err.message || 'Please try again.'), true);
+        showMessage(data.error || 'Something went wrong. Please try again.', true);
       }
+    } catch (err) {
+      showMessage('Network error. Please check your connection and try again.', true);
     } finally {
       waitlistBtn.disabled = false;
       waitlistBtn.textContent = 'Join Waitlist';
