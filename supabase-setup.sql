@@ -10,6 +10,10 @@ create table if not exists waitlist (
 -- Enable Row Level Security (RLS)
 alter table waitlist enable row level security;
 
+-- Drop existing policies if re-running
+drop policy if exists "Allow public insert" on waitlist;
+drop policy if exists "Allow authenticated read" on waitlist;
+
 -- Allow anyone to insert (for signup) — anon key can add emails
 create policy "Allow public insert" on waitlist
   for insert to anon

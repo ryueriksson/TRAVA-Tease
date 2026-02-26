@@ -1007,8 +1007,10 @@
     } catch (err) {
       if (err.code === '23505') {
         showMessage('This email is already on the waitlist.', true);
+      } else if (err.message?.includes('relation') && err.message?.includes('does not exist')) {
+        showMessage('Waitlist table not set up. Run supabase-setup.sql in Supabase SQL Editor.', true);
       } else {
-        showMessage('Something went wrong. Please try again.', true);
+        showMessage('Error: ' + (err.message || 'Please try again.'), true);
       }
     } finally {
       waitlistBtn.disabled = false;
