@@ -935,9 +935,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // Supabase config — get these from your project: Settings → API (URL + anon public key)
-  const SUPABASE_URL = 'https://mtakioqtwxdbonbnyshp.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10YWtpb3F0d3hkYm9uYnluc2hwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NTkxMjEsImV4cCI6MjA4NzQzNTEyMX0.T7I-boaiZjCWCSg6Sic-DPhYyqPc_2noMKVWm3OvD08';
+  // Supabase config — injected from Vercel env vars at build time
+  const SUPABASE_URL = '__SUPABASE_URL__';
+  const SUPABASE_ANON_KEY = '__SUPABASE_ANON_KEY__';
 
   // Particles
   const container = document.getElementById('particles');
@@ -989,7 +989,7 @@
     const email = waitlistEmail.value.trim();
     if (!email) return;
 
-    if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY') {
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       showMessage('Waitlist is not configured yet. Please add your Supabase credentials.', true);
       return;
     }
