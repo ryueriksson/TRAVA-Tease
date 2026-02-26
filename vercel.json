@@ -1,5 +1,8 @@
 {
   "framework": null,
   "buildCommand": "node build.js",
-  "outputDirectory": "."
+  "outputDirectory": "public",
+  "rewrites": [
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
 }
