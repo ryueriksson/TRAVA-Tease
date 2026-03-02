@@ -44,6 +44,12 @@ export default async function handler(req, res) {
     if (!response.ok) {
       const text = await response.text();
       console.error('Supabase error:', response.status, text);
+      // 404 = waitlist table doesn't exist - run supabase-setup.sql
+      if (response.status === 404 || text.includes('NOT_FOUND')) {
+        return res.status(500).json({
+          error: 'Waitlist is not set up yet. The database table needs to be created.',
+        });
+      }
       return res.status(500).json({ error: text || 'Failed to save email' });
     }
     return res.status(200).json({ success: true });

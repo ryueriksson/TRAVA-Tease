@@ -997,6 +997,8 @@
       if (res.ok) {
         showMessage('You\'re on the list! We\'ll be in touch soon.');
         waitlistEmail.value = '';
+      } else if (res.status === 404) {
+        showMessage('Service temporarily unavailable. Please try again later.', true);
       } else if (res.status === 409 || data.error === 'already_exists') {
         showMessage('This email is already on the waitlist.', true);
       } else {
