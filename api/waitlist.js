@@ -19,15 +19,15 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Email is required' });
   }
 
-  const url = process.env.SUPABASE_URL;
+  const baseUrl = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
   const key = process.env.SUPABASE_ANON_KEY;
 
-  if (!url || !key) {
+  if (!baseUrl || !key) {
     return res.status(500).json({ error: 'Server not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY in Vercel.' });
   }
 
   try {
-    const response = await fetch(`${url}/rest/v1/waitlist`, {
+    const response = await fetch(`${baseUrl}/rest/v1/waitlist`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
